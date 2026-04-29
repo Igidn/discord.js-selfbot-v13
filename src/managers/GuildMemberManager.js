@@ -28,6 +28,8 @@ class GuildMemberManager extends CachedManager {
      * @type {Guild}
      */
     this.guild = guild;
+
+    this._memberUpdateSubscriptions = new Set();
   }
 
   /**
@@ -70,6 +72,32 @@ class GuildMemberManager extends CachedManager {
     if (memberResolvable) return memberResolvable;
     const userId = this.client.users.resolveId(member);
     return this.cache.has(userId) ? userId : null;
+  }
+
+  _subscribeToMemberUpdates(userIds) {
+    const ids = [...new Set(userIds)].filter(Boolean);
+    if (!ids.length || !this.guild.shard) return;
+
+    let changed = false;
+    for (const id of ids) {
+      if (!this._memberUpdateSubscriptions.has(id)) {
+        this._memberUpdateSubscriptions.add(id);
+        changed = true;
+      }
+    }
+
+    if (!changed) return;
+
+    this.guild.shard.send({
+      op: Opcodes.GUILD_SUBSCRIPTIONS_BULK,
+      d: {
+        subscriptions: {
+          [this.guild.id]: {
+            members: [...this._memberUpdateSubscriptions],
+          },
+        },
+      },
+    });
   }
 
   /**
@@ -241,7 +269,9 @@ class GuildMemberManager extends CachedManager {
    */
   async search({ query, limit = 1, cache = true } = {}) {
     const data = await this.client.api.guilds(this.guild.id).members.search.get({ query: { query, limit } });
-    return data.reduce((col, member) => col.set(member.user.id, this._add(member, cache)), new Collection());
+    const members = data.reduce((col, member) => col.set(member.user.id, this._add(member, cache)), new Collection());
+    this._subscribeToMemberUpdates(members.keys());
+    return members;
   }
 
   /**
@@ -437,11 +467,16 @@ class GuildMemberManager extends CachedManager {
   async _fetchSingle({ user, cache, force = false }) {
     if (!force) {
       const existing = this.cache.get(user);
-      if (existing && !existing.partial) return existing;
+      if (existing && !existing.partial) {
+        this._subscribeToMemberUpdates([existing.id]);
+        return existing;
+      }
     }
 
     const data = await this.client.api.guilds(this.guild.id).members(user).get();
-    return this._add(data, cache);
+    const member = this._add(data, cache);
+    this._subscribeToMemberUpdates([member.id]);
+    return member;
   }
 
   /**
@@ -560,6 +595,7 @@ class GuildMemberManager extends CachedManager {
           clearTimeout(timeout);
           this.client.removeListener(Events.GUILD_MEMBERS_CHUNK, handler);
           this.client.decrementMaxListeners();
+          if (user_ids) this._subscribeToMemberUpdates(fetchedMembers.keys());
           let fetched = fetchedMembers;
           if (user_ids && !Array.isArray(user_ids) && fetched.size) fetched = fetched.first();
           resolve(fetched);
