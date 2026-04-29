@@ -1,9 +1,3 @@
-> [!IMPORTANT]
-> ## Project Archival
-> 
-> **This project is no longer actively maintained and this repository has been archived.**
->
-> You can read the full announcement [here](https://github.com/aiko-chan-ai/discord.js-selfbot-v13/discussions/1743)
 
 <div align="center">
   <br />
@@ -11,10 +5,6 @@
     <a href="https://discord.js.org"><img src="https://discord.js.org/static/logo.svg" width="546" alt="discord.js" /></a>
   </p>
 </div>
-
-> [!CAUTION]
-> **The use of this module under a different name on NPM (or another source besides this Github) is not associated with this library.**
-> **When using these libraries, you accept the risk of exposing your Discord Token.**
 
 ## About
 
@@ -30,12 +20,6 @@
     <a href="https://github.com/aiko-chan-ai/discord.js-selfbot-v13/actions"><img src="https://github.com/aiko-chan-ai/discord.js-selfbot-v13/actions/workflows/lint.yml/badge.svg" alt="Tests status" /></a>
   </p>
 </div>
-
-> [!WARNING]
-> **I don't take any responsibility for blocked Discord accounts that used this module.**
-
-> [!CAUTION]
-> **Using this on a user account is prohibited by the [Discord TOS](https://discord.com/terms) and can lead to the account block.**
 
 ### <strong>[Document Website](https://discordjs-self-v13.netlify.app/)</strong>
 
